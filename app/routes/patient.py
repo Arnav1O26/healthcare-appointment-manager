@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
+from app.models import DoctorProfile, User, Appointment, PreVisitSummary, PostVisitSummary
 
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
@@ -77,3 +78,24 @@ def get_slots():
         
     result = get_available_slots(doctor_id, date_str)
     return {"slots": result.get('slots', [])}
+
+@patient_bp.route('/history')
+@login_required
+def history():
+    # Fetch all appointments for the logged-in patient
+    appointments = Appointment.query.filter_by(patient_id=current_user.id).order_by(Appointment.start_time.desc()).all()
+    
+    history_data = []
+    for appt in appointments:
+        doc_profile = DoctorProfile.query.get(appt.doctor_id)
+        doctor_user = User.query.get(doc_profile.user_id) if doc_profile else None
+        post_summary = PostVisitSummary.query.filter_by(appointment_id=appt.id).first()
+        
+        history_data.append({
+            'appointment': appt,
+            'doctor_name': doctor_user.name if doctor_user else 'Unknown',
+            'specialization': doc_profile.specialization if doc_profile else 'General',
+            'post_summary': post_summary
+        })
+
+    return render_template('patient_history.html', history_data=history_data)
