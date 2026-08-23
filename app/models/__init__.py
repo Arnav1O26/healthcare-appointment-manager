@@ -35,7 +35,7 @@ class Appointment(db.Model):
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor_profiles.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), default='pending') # pending, confirmed, cancelled, completed
+    status = db.Column(db.String(20), default='held') # held, pending, confirmed, cancelled, completed
     calendar_event_id = db.Column(db.String(100), nullable=True) # For Google Calendar
     
 class DoctorLeave(db.Model):
