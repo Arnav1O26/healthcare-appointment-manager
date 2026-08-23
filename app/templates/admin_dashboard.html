@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white p-8 border border-gray-300 shadow-lg rounded-lg mt-8">
+    
+    <div class="flex justify-between items-center mb-8 border-b pb-4">
+        <h2 class="text-3xl font-bold text-gray-800">Admin Portal</h2>
+        <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow">Logout</a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-blue-50 p-6 rounded-lg text-center border border-blue-200">
+            <h3 class="text-xl font-bold text-blue-800">Total Patients</h3>
+            <p class="text-4xl font-extrabold text-blue-600 mt-2">{{ total_patients }}</p>
+        </div>
+        <div class="bg-green-50 p-6 rounded-lg text-center border border-green-200">
+            <h3 class="text-xl font-bold text-green-800">Total Doctors</h3>
+            <p class="text-4xl font-extrabold text-green-600 mt-2">{{ total_doctors }}</p>
+        </div>
+        <div class="bg-purple-50 p-6 rounded-lg text-center border border-purple-200">
+            <h3 class="text-xl font-bold text-purple-800">Appointments</h3>
+            <p class="text-4xl font-extrabold text-purple-600 mt-2">{{ total_appointments }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Add Doctor Form -->
+        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Onboard New Doctor</h3>
+            <form method="POST" action="{{ url_for('admin.add_doctor') }}">
+                <input type="text" name="name" required class="w-full border rounded py-2 px-3 mb-4" placeholder="Full Name">
+                <input type="email" name="email" required class="w-full border rounded py-2 px-3 mb-4" placeholder="Email">
+                <input type="password" name="password" required class="w-full border rounded py-2 px-3 mb-4" placeholder="Temporary Password">
+                <input type="text" name="specialization" required class="w-full border rounded py-2 px-3 mb-6" placeholder="Specialization (e.g., Neurologist)">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">Add Doctor</button>
+            </form>
+        </div>
+
+        <!-- Doctor Roster -->
+        <div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Active Roster</h3>
+            <div class="space-y-4">
+                {% for doc in doctors %}
+                <div class="p-4 border rounded bg-white shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-800">Dr. {{ doc.user.name }}</p>
+                        <p class="text-sm text-gray-600">{{ doc.specialization }}</p>
+                    </div>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Active</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

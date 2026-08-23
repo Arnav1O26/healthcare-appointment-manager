@@ -47,4 +47,7 @@ def create_app():
             return markdown(text)
         return ""
     
+    from app.routes.admin import admin_bp
+    app.register_blueprint(admin_bp)
+    
     return app
