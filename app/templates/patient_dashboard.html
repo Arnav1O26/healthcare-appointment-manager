@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-8 border border-gray-300 shadow-lg rounded-lg mt-8">
+    
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8 border-b pb-4">
+        <h2 class="text-3xl font-bold text-gray-800">Welcome to your Dashboard, {{ user.name }}!</h2>
+        <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow">
+            Logout
+        </a>
+    </div>
+    
+    <!-- Action Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Book Appointment Card -->
+        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition">
+            <h3 class="text-xl font-semibold mb-2 text-blue-800">Book an Appointment</h3>
+            <p class="text-gray-600 mb-6">Find a specialist, choose a time slot, and fill out your symptom form.</p>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                Book Now
+            </button>
+        </div>
+
+        <!-- My Appointments Card -->
+        <div class="bg-green-50 p-6 rounded-lg border border-green-200 shadow-sm hover:shadow-md transition">
+            <h3 class="text-xl font-semibold mb-2 text-green-800">My Appointments</h3>
+            <p class="text-gray-600 mb-6">View your upcoming visits and read your AI post-visit summaries.</p>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full">
+                View History
+            </button>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
