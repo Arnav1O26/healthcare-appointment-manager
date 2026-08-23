@@ -37,3 +37,44 @@ def dashboard():
         })
 
     return render_template('doctor_dashboard.html', appointments_data=appointments_data)
+
+@doctor_bp.route('/consultation/<int:appointment_id>', methods=['GET', 'POST'])
+@login_required
+def consultation(appointment_id):
+    if current_user.role != 'doctor':
+        flash('Access denied.', 'error')
+        return redirect(url_for('auth.login'))
+        
+    appointment = Appointment.query.get_or_404(appointment_id)
+    patient = User.query.get(appointment.patient_id)
+    
+    # Ensure this appointment belongs to the logged-in doctor
+    doctor_profile = DoctorProfile.query.filter_by(user_id=current_user.id).first()
+    if appointment.doctor_id != doctor_profile.id:
+        flash('You do not have permission to view this appointment.', 'error')
+        return redirect(url_for('doctor.dashboard'))
+    
+    if request.method == 'POST':
+        clinical_notes = request.form.get('clinical_notes')
+        
+        # Process the complex notes into a patient-friendly summary with AI
+        ai_result = generate_post_visit_summary(clinical_notes)
+        
+        # Save to database
+        post_summary = PostVisitSummary(
+            appointment_id=appointment.id,
+            raw_clinical_notes=clinical_notes,
+            ai_friendly_summary=ai_result['summary'] if ai_result['success'] else None
+        )
+        db.session.add(post_summary)
+        
+        # Mark appointment as completed
+        appointment.status = 'completed'
+        db.session.commit()
+        
+        # Trigger APScheduler medication reminders here in a production environment
+        
+        flash('Consultation completed! AI summary generated for the patient.', 'success')
+        return redirect(url_for('doctor.dashboard'))
+        
+    return render_template('consultation.html', appointment=appointment, patient=patient)

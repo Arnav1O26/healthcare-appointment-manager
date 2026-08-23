@@ -1,3 +1,4 @@
+from markdown import markdown
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -38,5 +39,12 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+    
+    # Add Markdown filter for the Jinja templates
+    @app.template_filter('markdown')
+    def render_markdown(text):
+        if text:
+            return markdown(text)
+        return ""
     
     return app
