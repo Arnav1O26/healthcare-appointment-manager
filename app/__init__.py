@@ -27,10 +27,12 @@ def create_app():
     # Register Blueprints
     from app.routes.auth import auth_bp
     from app.routes.patient import patient_bp
+    from app.routes.doctor import doctor_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(patient_bp)
-
+    app.register_blueprint(doctor_bp) 
+    
     # User loader for Flask-Login
     from app.models import User
     @login_manager.user_loader

@@ -16,7 +16,10 @@ def login():
             login_user(user)
             if user.role == 'patient':
                 return redirect(url_for('patient.dashboard'))
-            # Add doctor/admin redirects later
+            elif user.role == 'doctor':
+                return redirect(url_for('doctor.dashboard'))
+            elif user.role == 'admin':
+                return redirect(url_for('admin.dashboard'))
         else:
             flash('Invalid email or password', 'error')
             
