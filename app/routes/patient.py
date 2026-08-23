@@ -8,3 +8,72 @@ patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 def dashboard():
     # Later, we will load actual appointments from the database here
     return render_template('patient_dashboard.html', user=current_user)
+
+
+from flask import request, redirect, url_for, flash
+from app.models import DoctorProfile, User, Appointment, PreVisitSummary
+from app.services.slot_service import get_available_slots
+from app.services.booking_service import hold_slot
+from app.services.llm_service import generate_pre_visit_summary
+from app import db
+import datetime
+
+@patient_bp.route('/book', methods=['GET', 'POST'])
+@login_required
+def book_appointment():
+    # 1. Get a list of all doctors to show in the dropdown
+    doctors = DoctorProfile.query.join(User).all()
+    
+    if request.method == 'POST':
+        doctor_id = request.form.get('doctor_id')
+        date_str = request.form.get('date')
+        time_str = request.form.get('time')
+        symptoms = request.form.get('symptoms')
+
+        # Combine date and time for the database
+        start_time_str = f"{date_str} {time_str}"
+        
+        # 2. Attempt to lock the slot using our concurrency service
+        hold_result = hold_slot(current_user.id, doctor_id, start_time_str)
+        
+        if not hold_result['success']:
+            flash(hold_result['message'], 'error')
+            return redirect(url_for('patient.book_appointment'))
+            
+        appointment_id = hold_result['appointment_id']
+
+        # 3. Process Symptoms with AI (Pre-visit Summary)
+        ai_result = generate_pre_visit_summary(symptoms)
+        
+        # Save the AI summary (or the raw text if AI failed) to the database
+        summary_record = PreVisitSummary(
+            appointment_id=appointment_id,
+            raw_symptoms=symptoms,
+            ai_summary=ai_result['summary'] if ai_result['success'] else None
+        )
+        db.session.add(summary_record)
+        
+        # 4. Confirm the appointment (changing status from 'held' to 'confirmed')
+        appointment = Appointment.query.get(appointment_id)
+        appointment.status = 'confirmed'
+        db.session.commit()
+        
+        # Note: In a production app, we would call the Google Calendar 
+        # and Email service here!
+        
+        flash('Appointment booked successfully! The doctor will review your symptoms.', 'success')
+        return redirect(url_for('patient.dashboard'))
+
+    return render_template('book_appointment.html', doctors=doctors)
+
+# API Route to get time slots dynamically when the user picks a date via JavaScript
+@patient_bp.route('/api/slots')
+@login_required
+def get_slots():
+    doctor_id = request.args.get('doctor_id')
+    date_str = request.args.get('date')
+    if not doctor_id or not date_str:
+        return {"slots": []}
+        
+    result = get_available_slots(doctor_id, date_str)
+    return {"slots": result.get('slots', [])}

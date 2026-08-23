@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 border border-gray-300 shadow-lg rounded-lg mt-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Book an Appointment</h2>
+        <a href="{{ url_for('patient.dashboard') }}" class="text-blue-500 hover:underline">Back to Dashboard</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('patient.book_appointment') }}">
+        
+        <!-- Doctor Selection -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Select Specialist</label>
+            <select name="doctor_id" id="doctor_id" required class="w-full border rounded py-2 px-3 text-gray-700 bg-white">
+                <option value="" disabled selected>Choose a doctor...</option>
+                {% for doc in doctors %}
+                    <option value="{{ doc.id }}">Dr. {{ doc.user.name }} ({{ doc.specialization }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Select Date</label>
+            <input type="date" name="date" id="date" required class="w-full border rounded py-2 px-3 text-gray-700">
+        </div>
+
+        <!-- Time Slot Selection -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Available Times</label>
+            <select name="time" id="time" required class="w-full border rounded py-2 px-3 text-gray-700 bg-white disabled:bg-gray-200">
+                <option value="" disabled selected>Please select a doctor and date first</option>
+            </select>
+        </div>
+
+        <!-- AI Symptom Form -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">Describe Your Symptoms</label>
+            <p class="text-sm text-gray-500 mb-2">Our AI will summarize this for the doctor before your visit.</p>
+            <textarea name="symptoms" rows="4" required class="w-full border rounded py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline" placeholder="E.g., I have had a severe headache and slight fever for the past 3 days..."></textarea>
+        </div>
+
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded w-full text-lg shadow-md">
+            Confirm Booking
+        </button>
+    </form>
+</div>
+
+<!-- JavaScript to fetch available slots dynamically -->
+<script>
+    const doctorSelect = document.getElementById('doctor_id');
+    const dateInput = document.getElementById('date');
+    const timeSelect = document.getElementById('time');
+
+    async function fetchSlots() {
+        const doctorId = doctorSelect.value;
+        const dateVal = dateInput.value;
+        
+        if (doctorId && dateVal) {
+            timeSelect.innerHTML = '<option disabled selected>Loading slots...</option>';
+            timeSelect.disabled = true;
+
+            const response = await fetch(`/patient/api/slots?doctor_id=${doctorId}&date=${dateVal}`);
+            const data = await response.json();
+            
+            timeSelect.innerHTML = '<option value="" disabled selected>Select a time...</option>';
+            
+            if (data.slots && data.slots.length > 0) {
+                data.slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = slot;
+                    timeSelect.appendChild(option);
+                });
+                timeSelect.disabled = false;
+            } else {
+                timeSelect.innerHTML = '<option disabled selected>No slots available</option>';
+            }
+        }
+    }
+
+    doctorSelect.addEventListener('change', fetchSlots);
+    dateInput.addEventListener('change', fetchSlots);
+</script>
+{% endblock %}
