@@ -44,3 +44,18 @@ class DoctorLeave(db.Model):
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor_profiles.id'), nullable=False)
     leave_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(200), nullable=True)
+    
+class PreVisitSummary(db.Model):
+    __tablename__ = 'pre_visit_summaries'
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=False)
+    raw_symptoms = db.Column(db.Text, nullable=False)
+    ai_summary = db.Column(db.Text, nullable=True) # Stores the LLM output
+
+class PostVisitSummary(db.Model):
+    __tablename__ = 'post_visit_summaries'
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=False)
+    raw_clinical_notes = db.Column(db.Text, nullable=False)
+    ai_friendly_summary = db.Column(db.Text, nullable=True) # Stores the LLM output
+    
