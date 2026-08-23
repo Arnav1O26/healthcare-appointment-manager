@@ -24,6 +24,17 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
-    # We will register our blueprints (routes) here later
+    # Register Blueprints
+    from app.routes.auth import auth_bp
+    from app.routes.patient import patient_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(patient_bp)
+
+    # User loader for Flask-Login
+    from app.models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
     
     return app
