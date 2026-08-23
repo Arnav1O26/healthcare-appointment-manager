@@ -59,3 +59,12 @@ class PostVisitSummary(db.Model):
     raw_clinical_notes = db.Column(db.Text, nullable=False)
     ai_friendly_summary = db.Column(db.Text, nullable=True) # Stores the LLM output
     
+class MedicationReminder(db.Model):
+    __tablename__ = 'medication_reminders'
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=False)
+    medication_name = db.Column(db.String(150), nullable=False)
+    frequency_hours = db.Column(db.Integer, nullable=False) # e.g., every 8 hours
+    next_run_at = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default='active') # active or completed
