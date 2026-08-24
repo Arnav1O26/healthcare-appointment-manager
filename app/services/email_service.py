@@ -1,39 +1,36 @@
-import smtplib
 import os
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def send_email(to_email, subject, body):
     """
     Sends an email using standard SMTP.
-    Requires SMTP_EMAIL and SMTP_PASSWORD in the .env file.
+    Requires MAIL_USERNAME and MAIL_PASSWORD in the .env file.
     """
-    sender_email = os.getenv('SMTP_EMAIL')
-    sender_password = os.getenv('SMTP_PASSWORD')
-
+    sender_email = os.environ.get('MAIL_USERNAME')
+    sender_password = os.environ.get('MAIL_PASSWORD')
+    
+    # Fail gracefully if no credentials are provided
     if not sender_email or not sender_password:
-        print("Email credentials not configured. Skipping email send.")
-        return {"success": False, "message": "Credentials missing"}
-
+        print(f"Email skipped (No credentials). Would have sent to {to_email}: {subject}")
+        return False
+        
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = to_email
     msg['Subject'] = subject
+    
     msg.attach(MIMEText(body, 'plain'))
-
+    
     try:
-        # Using Gmail's SMTP server as the default
+        # Defaults to Gmail's SMTP server
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
-        return {"success": True, "message": "Email sent!"}
+        return True
     except Exception as e:
-        print(f"Failed to send email: {e}")
-        return {"success": False, "error": str(e)}
-
-def send_booking_confirmation(patient_email, doctor_name, date, time):
-    subject = "Appointment Confirmed!"
-    body = f"Your appointment with {doctor_name} on {date} at {time} is confirmed.\n\nPlease arrive 5 minutes early."
-    return send_email(patient_email, subject, body)
+        print(f"Failed to send email to {to_email}. Error: {e}")
+        return False

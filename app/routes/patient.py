@@ -1,6 +1,12 @@
-from flask import Blueprint, render_template
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from app.models import DoctorProfile, User, Appointment, PreVisitSummary, PostVisitSummary
+
+from app import db
+from app.models import DoctorProfile, User, Appointment, PreVisitSummary, PostVisitSummary, DoctorLeave
+from app.services.slot_service import get_available_slots
+from app.services.booking_service import hold_slot
+from app.services.llm_service import generate_pre_visit_summary
 
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
@@ -9,15 +15,6 @@ patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 def dashboard():
     # Later, we will load actual appointments from the database here
     return render_template('patient_dashboard.html', user=current_user)
-
-
-from flask import request, redirect, url_for, flash
-from app.models import DoctorProfile, User, Appointment, PreVisitSummary
-from app.services.slot_service import get_available_slots
-from app.services.booking_service import hold_slot
-from app.services.llm_service import generate_pre_visit_summary
-from app import db
-import datetime
 
 @patient_bp.route('/book', methods=['GET', 'POST'])
 @login_required
@@ -73,9 +70,19 @@ def book_appointment():
 def get_slots():
     doctor_id = request.args.get('doctor_id')
     date_str = request.args.get('date')
+
     if not doctor_id or not date_str:
         return {"slots": []}
-        
+
+    # 1. Convert the string date into a proper Python date object
+    target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    # 2. Check if the doctor is on leave
+    is_on_leave = DoctorLeave.query.filter_by(doctor_id=doctor_id, leave_date=target_date).first()
+    if is_on_leave:
+        return {"slots": []} # Return empty slots if on leave
+
+    # 3. Fetch standard slots if not on leave
     result = get_available_slots(doctor_id, date_str)
     return {"slots": result.get('slots', [])}
 

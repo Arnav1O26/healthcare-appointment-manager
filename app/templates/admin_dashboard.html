@@ -36,6 +36,21 @@
             </form>
         </div>
 
+        <!-- Mark Doctor on Leave -->
+        <div class="bg-red-50 p-6 rounded-lg border border-red-200 mt-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Manage Doctor Leave</h3>
+            <form method="POST" action="{{ url_for('admin.add_leave') }}">
+                <select name="doctor_id" required class="w-full border rounded py-2 px-3 mb-4 text-gray-700">
+                    <option value="" disabled selected>Select Doctor</option>
+                    {% for doc in doctors %}
+                        <option value="{{ doc.id }}">Dr. {{ doc.user.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="leave_date" required class="w-full border rounded py-2 px-3 mb-6 text-gray-700">
+                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">Mark on Leave</button>
+            </form>
+        </div>
+
         <!-- Doctor Roster -->
         <div>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Active Roster</h3>
