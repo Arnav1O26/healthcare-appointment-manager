@@ -4,3 +4,5 @@ __pycache__/
 .env
 instance/
 *.db
+
+client_secret.json

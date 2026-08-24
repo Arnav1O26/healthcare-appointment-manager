@@ -3,21 +3,20 @@ import datetime
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from flask import session
 
 # Note: For this to work in production, you need a 'token.json' file generated 
 # by a full Google OAuth 2.0 flow. 
 
 def get_calendar_service():
-    """Authenticates and returns the Google Calendar API service."""
-    creds = None
-    # We will look for a saved token file
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json')
-    
-    if not creds or not creds.valid:
-        print("Google Calendar not authenticated. Skipping calendar sync.")
+    """Authenticates and returns the Google Calendar API service using Flask session."""
+    if 'credentials' not in session:
+        print("Google Calendar not authenticated in session. Skipping calendar sync.")
         return None
-        
+    
+    # Load the credentials from the user's active web session
+    creds = Credentials(**session['credentials'])
+    
     return build('calendar', 'v3', credentials=creds)
 
 def create_calendar_event(summary, description, start_time_str, end_time_str, patient_email, doctor_email):
