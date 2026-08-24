@@ -19,8 +19,18 @@ def dashboard():
 @patient_bp.route('/book', methods=['GET', 'POST'])
 @login_required
 def book_appointment():
-    # 1. Get a list of all doctors to show in the dropdown
-    doctors = DoctorProfile.query.join(User).all()
+    # Fetch all unique specializations to populate the filter dropdown
+    all_specs = db.session.query(DoctorProfile.specialization).distinct().all()
+    specializations = [spec[0] for spec in all_specs] # Flatten the list
+    
+    # Check if the user applied a filter via the URL (e.g., ?specialization=Cardiologist)
+    selected_spec = request.args.get('specialization')
+
+    # 1. Get a list of doctors, applying the filter if one exists
+    if selected_spec:
+        doctors = DoctorProfile.query.join(User).filter(DoctorProfile.specialization == selected_spec).all()
+    else:
+        doctors = DoctorProfile.query.join(User).all()
     
     if request.method == 'POST':
         doctor_id = request.form.get('doctor_id')
@@ -56,13 +66,20 @@ def book_appointment():
         appointment.status = 'confirmed'
         db.session.commit()
         
-        # Note: In a production app, we would call the Google Calendar 
-        # and Email service here!
+        # Send confirmation email to the patient
+        # (Assuming you imported send_email at the top of patient.py)
+        # subject = "Appointment Confirmed"
+        # body = f"Your appointment is confirmed for {start_time_str}."
+        # send_email(current_user.email, subject, body)
         
         flash('Appointment booked successfully! The doctor will review your symptoms.', 'success')
         return redirect(url_for('patient.dashboard'))
 
-    return render_template('book_appointment.html', doctors=doctors)
+    # Pass the specializations and the currently selected spec to the template
+    return render_template('book_appointment.html', 
+                           doctors=doctors, 
+                           specializations=specializations, 
+                           selected_spec=selected_spec)
 
 # API Route to get time slots dynamically when the user picks a date via JavaScript
 @patient_bp.route('/api/slots')
